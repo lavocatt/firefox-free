@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Firefox Free
+GenericName=Web Browser
+Comment=Unmanaged Firefox Container
+# The %u allows it to accept URLs from other apps
+Exec=$HOME/.local/bin/firefox-free %u
+Icon=firefox
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+StartupNotify=true
+# This groups the windows correctly in the dock
+StartupWMClass=firefox

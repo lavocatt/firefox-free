@@ -1,0 +1,60 @@
+#!/bin/bash
+
+CONTAINER_NAME="firefox-free"
+
+# 1. Check if the container is ALREADY running
+if podman ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+    # echo "Container is running. Opening new window..."
+
+    # We use 'exec' to run the firefox command INSIDE the existing container.
+    # Firefox has built-in logic: if it sees a lock file in the profile,
+    # it just signals the main process to open a new window and then exits.
+    podman exec "$CONTAINER_NAME" firefox "$@"
+
+else
+    # 2. Check if the container exists but is STOPPED (stale)
+    if podman ps -a --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+        # echo "Cleaning up stale container..."
+        podman rm "$CONTAINER_NAME" > /dev/null
+    fi
+
+    # 3. Start a FRESH container
+    # echo "Starting new Firefox container..."
+
+    # Ensure directories exist
+    mkdir -p "$HOME/.firefox-free-profile"
+    mkdir -p "$HOME/.cache/firefox-free"
+
+    # Allow X11 access
+    xhost +local: > /dev/null 2>&1
+
+    # Run the container in detached mode (-d)
+    podman run --rm -d \
+      --name "$CONTAINER_NAME" \
+      --tz=local \
+      --userns=keep-id \
+      --net=host \
+      --privileged \
+      --security-opt label=disable \
+      --env="DISPLAY" \
+      --env="WAYLAND_DISPLAY=$WAYLAND_DISPLAY" \
+      --env="XDG_SESSION_TYPE=$XDG_SESSION_TYPE" \
+      --env="XDG_CURRENT_DESKTOP=$XDG_CURRENT_DESKTOP" \
+      --env="MOZ_ENABLE_WAYLAND=1" \
+      --env="XDG_RUNTIME_DIR=/run/user/$(id -u)" \
+      --env="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus" \
+      --device /dev/video0 \
+      --device /dev/snd \
+      --device /dev/dri \
+      -v /dev/shm:/dev/shm \
+      -v /run/user/$(id -u):/run/user/$(id -u) \
+      -v /tmp/.X11-unix:/tmp/.X11-unix \
+      --env="HOME=$HOME" \
+      --env="USER=$USER" \
+      -v "$HOME/.Xauthority:/run/user/$(id -u)/xauth" \
+      -v "$HOME:$HOME" \
+      -v "$HOME/.firefox-free-profile:$HOME/.mozilla" \
+      -v "$HOME/.cache/firefox-free:$HOME/.cache/mozilla" \
+      -w "$HOME" \
+      firefox-free firefox "$@"
+fi
