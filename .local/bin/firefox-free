@@ -33,6 +33,7 @@ else
       --name "$CONTAINER_NAME" \
       --tz=local \
       --userns=keep-id \
+      --group-add keep-groups \
       --net=host \
       --privileged \
       --security-opt label=disable \
@@ -43,9 +44,9 @@ else
       --env="MOZ_ENABLE_WAYLAND=1" \
       --env="XDG_RUNTIME_DIR=/run/user/$(id -u)" \
       --env="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus" \
-      --device /dev/video0 \
       --device /dev/snd \
       --device /dev/dri \
+      -v /run/udev/data:/run/udev/data:ro \
       -v /dev/shm:/dev/shm \
       -v /run/user/$(id -u):/run/user/$(id -u) \
       -v /tmp/.X11-unix:/tmp/.X11-unix \

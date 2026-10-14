@@ -1,5 +1,7 @@
-FROM registry.fedoraproject.org/fedora:43
-RUN dnf install -y firefox liberation-fonts alsa-lib pipewire-alsa pulseaudio-libs mesa-dri-drivers && dnf clean all
+FROM registry.fedoraproject.org/fedora:44
+RUN dnf install -y firefox liberation-fonts alsa-lib pipewire-alsa pulseaudio-libs mesa-dri-drivers ca-certificates && dnf clean all
+COPY certs/ /etc/pki/ca-trust/source/anchors/
+RUN update-ca-trust
 # Ensure user 1000 exists (standard for first user)
 RUN useradd -u 1000 -m -G video,audio firefox
 USER 1000

@@ -12,7 +12,7 @@ This setup creates a **Tiered Security Model** on a single corporate machine:
 ## Features
 * **Containerized:** Runs as a standard `podman` user process. Leaves no unmanaged binaries in `/usr/bin`.
 * **Persistent Profile:** Bookmarks, history, and passwords survive reboots and container rebuilds (`~/.firefox-free-profile`).
-* **Hardware Integrated:** Native access to GPU (`/dev/dri`), Audio, and Webcam (`/dev/video0`).
+* **Hardware Integrated:** Native access to GPU (`/dev/dri`), Audio, and Webcam (all host devices via `--privileged`).
 * **Wayland Native:** Full Wayland support with working GNOME screen sharing (via PipeWire and XDG portals).
 * **DBus Connected:** No UI freezes; native GNOME file pickers and dialogs.
 * **SELinux Compliant:** Uses `:Z` flags and `svirt_sandbox_file_t` contexts to play nice with Fedora's security policies.
