@@ -9,7 +9,12 @@ mkdir -p certs
 
 # Remember where the sources are, for automatic rebuilds
 mkdir -p ~/.config/firefox-free
-echo "FIREFOX_FREE_SRC=\"$(pwd)\"" > ~/.config/firefox-free/config
+# (update only our line: the user may have other settings there)
+touch ~/.config/firefox-free/config
+sed -i '/^FIREFOX_FREE_SRC=/d' ~/.config/firefox-free/config
+echo "FIREFOX_FREE_SRC=\"$(pwd)\"" >> ~/.config/firefox-free/config
+# Domains opened in another browser instead; keep the user's edited copy
+cp -n .config/firefox-free/bypass-domains ~/.config/firefox-free/
 
 # Build the container
 podman build --pull=newer -t firefox-free .

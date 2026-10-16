@@ -4,6 +4,52 @@ CONTAINER_NAME="firefox-free"
 BIN_DIR="$(dirname "$(readlink -f "$0")")"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/firefox-free"
 
+# Bypass list: URLs on the domains listed in bypass-domains (or their
+# subdomains) are opened in BYPASS_BROWSER on the host instead of here.
+# Empty by default. BYPASS_BROWSER is any command taking a URL (firefox,
+# chromium-browser, "flatpak run org.mozilla.firefox", ...), set in config.
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/firefox-free"
+BYPASS_BROWSER="google-chrome"
+# shellcheck source=/dev/null
+[ -f "$CONFIG_DIR/config" ] && . "$CONFIG_DIR/config"
+BYPASS_DOMAINS=$(sed 's/#.*//' "$CONFIG_DIR/bypass-domains" 2>/dev/null)
+is_bypass_url() {
+    local host="${1#*://}"
+    case "$1" in http://*|https://*) ;; *) return 1 ;; esac
+    host="${host%%[/?#]*}"   # drop path, query, fragment
+    host="${host##*@}"       # drop user:pass@
+    host="${host%%:*}"       # drop port
+    host="${host%.}"         # drop trailing dot
+    host="${host,,}"
+    local domain
+    for domain in $BYPASS_DOMAINS; do
+        [ "$host" = "$domain" ] || [[ "$host" == *."$domain" ]] && return 0
+    done
+    return 1
+}
+
+args=()
+routed=0
+for arg in "$@"; do
+    if is_bypass_url "$arg"; then
+        # (and never ourselves, e.g. if "firefox" is aliased to firefox-free)
+        bypass_bin=$(command -v "${BYPASS_BROWSER%% *}")
+        if [ -n "$bypass_bin" ] \
+                && [ "$(readlink -f "$bypass_bin")" != "$(readlink -f "$0")" ]; then
+            setsid -f $BYPASS_BROWSER "$arg" > /dev/null 2>&1 < /dev/null
+            routed=1
+            continue
+        fi
+        # Keep the link rather than lose it if the bypass browser is missing
+        notify-send -i firefox "firefox-free: bypass browser unusable" \
+            "'$BYPASS_BROWSER' is not usable; set BYPASS_BROWSER in $CONFIG_DIR/config" 2>/dev/null
+    fi
+    args+=("$arg")
+done
+# Only bypassed URLs were given: nothing left for firefox-free to open
+[ "$routed" = 1 ] && [ "${#args[@]}" = 0 ] && exit 0
+set -- "${args[@]}"
+
 # 1. Check if the container is ALREADY running
 if podman ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
     # echo "Container is running. Opening new window..."

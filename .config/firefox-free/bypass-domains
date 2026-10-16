@@ -1,0 +1,4 @@
+# Domains opened in another browser (BYPASS_BROWSER, default google-chrome)
+# instead of firefox-free when a link comes from another app.
+# One domain per line; subdomains are included. Empty by default.
+# Installed to ~/.config/firefox-free/bypass-domains; edit that copy.
