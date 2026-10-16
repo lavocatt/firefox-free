@@ -30,11 +30,13 @@ systemctl --user enable --now firefox-free-update.timer
 
 # Make everyone able to find the firefox-free executable
 # for bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.profile
+for rc in ~/.bashrc ~/.profile; do
+    grep -qsF '$HOME/.local/bin' "$rc" \
+        || echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc"
+done
 # for gnome
 mkdir -p ~/.config/environment.d
-echo "PATH=$HOME/.local/bin:$PATH" > ~/.config/environment.d/90-local-bin.conf
+echo 'PATH=$HOME/.local/bin:${PATH}' > ~/.config/environment.d/90-local-bin.conf
 
 # Set it as the default for HTTP and HTTPS protocols
 xdg-mime default firefox-free.desktop x-scheme-handler/http
