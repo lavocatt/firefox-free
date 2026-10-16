@@ -25,7 +25,9 @@ touch ~/.local/state/firefox-free/last-build
 mkdir -p ~/.local/bin/
 mkdir -p ~/.local/share/applications/
 cp .local/bin/firefox-free .local/bin/firefox-free-update ~/.local/bin/
-cp .local/share/applications/firefox-free.desktop ~/.local/share/applications/
+sed "s|^Exec=.*|Exec=$HOME/.local/bin/firefox-free %u|" \
+    .local/share/applications/firefox-free.desktop \
+    > ~/.local/share/applications/firefox-free.desktop
 
 # Rebuild the image daily with the latest Firefox
 mkdir -p ~/.config/systemd/user/

@@ -3,7 +3,8 @@ Name=Firefox Free
 GenericName=Web Browser
 Comment=Unmanaged Firefox Container
 # The %u allows it to accept URLs from other apps
-Exec=$HOME/.local/bin/firefox-free %u
+# install.sh rewrites this to the absolute path (Exec does not expand $HOME)
+Exec=firefox-free %u
 Icon=firefox
 Terminal=false
 Type=Application
@@ -11,3 +12,4 @@ Categories=Network;WebBrowser;
 StartupNotify=true
 # This groups the windows correctly in the dock
 StartupWMClass=firefox
+MimeType=x-scheme-handler/unknown;x-scheme-handler/about;x-scheme-handler/https;x-scheme-handler/http;text/html;
