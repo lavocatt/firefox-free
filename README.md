@@ -6,8 +6,8 @@ Built to bypass aggressive corporate web proxies and managed browser policies (e
 
 ## The "Zero Trust" Philosophy
 This setup creates a **Tiered Security Model** on a single corporate machine:
-1. **Corporate (Managed Chrome):** Used exclusively for internal intranet (`w3`), HR, and corporate cloud. Contains custom Root CAs and tracking.
-2. **Local/Upstream (firefox-free):** An air-gapped, standard consumer browser. It physically cannot access internal networks because it lacks the corporate SSL certificates. Used for standard internet, and `localhost` development.
+1. **Corporate (Managed Chrome):** Used exclusively for the internal intranet, HR, and corporate cloud. Contains custom Root CAs and tracking.
+2. **Local/Upstream (firefox-free):** A standard consumer browser that does not trust the corporate CAs, so internal HTTPS sites fail certificate validation. Used for standard internet, and `localhost` development. Note that this is trust isolation, not network isolation: the container shares the host network (`--net=host`).
 
 ## Features
 * **Containerized:** Runs as a standard `podman` user process. Leaves no unmanaged binaries in `/usr/bin`.
@@ -32,7 +32,8 @@ This setup creates a **Tiered Security Model** on a single corporate machine:
 ## Installation
 
 1. Clone or download this repository. Keep the clone: automatic updates rebuild from it.
-2. Optional: put extra root CA certificates (`.pem`) in `certs/`; they are trusted inside the container.
+2. Optional: add extra root CA certificates. Every file in `certs/` (git-ignored, populated by hand) is trusted inside the container, so copy only the CAs you deliberately want this browser to trust.
+   Do **not** copy the whole host anchors directory: on a managed machine it typically also holds the corporate CAs this browser is meant not to trust. Rebuild the image after changing `certs/`.
 3. Run the deployment script:
    ```bash
    chmod +x install.sh
