@@ -4,14 +4,29 @@ mkdir -p ~/.cache/firefox-free/
 chown -R $(id -u):$(id -g) ~/.firefox-free-profile
 chcon -Rt svirt_sandbox_file_t ~/.firefox-free-profile
 
+# Custom CA certificates go in certs/ (git-ignored); it may stay empty
+mkdir -p certs
+
+# Remember where the sources are, for automatic rebuilds
+mkdir -p ~/.config/firefox-free
+echo "FIREFOX_FREE_SRC=\"$(pwd)\"" > ~/.config/firefox-free/config
+
 # Build the container
-podman build -t firefox-free .
+podman build --pull=newer -t firefox-free .
+mkdir -p ~/.local/state/firefox-free
+touch ~/.local/state/firefox-free/last-build
 
 # Install the firefox free app and desktop shortcut
 mkdir -p ~/.local/bin/
 mkdir -p ~/.local/share/applications/
-cp .local/bin/firefox-free ~/.local/bin/
+cp .local/bin/firefox-free .local/bin/firefox-free-update ~/.local/bin/
 cp .local/share/applications/firefox-free.desktop ~/.local/share/applications/
+
+# Rebuild the image daily with the latest Firefox
+mkdir -p ~/.config/systemd/user/
+cp .config/systemd/user/firefox-free-update.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now firefox-free-update.timer
 
 # Make everyone able to find the firefox-free executable
 # for bash

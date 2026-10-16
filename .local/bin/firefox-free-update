@@ -1,0 +1,47 @@
+#!/bin/bash
+# Rebuild the firefox-free image with the latest Fedora packages.
+#
+# Usage: firefox-free-update [--if-stale HOURS]
+#   --if-stale HOURS  only rebuild if the last successful build is older
+#
+# The new image is used on the next cold start of firefox-free.
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/firefox-free"
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/firefox-free/config"
+STAMP="$STATE_DIR/last-build"
+LOG="$STATE_DIR/update.log"
+
+mkdir -p "$STATE_DIR"
+
+# FIREFOX_FREE_SRC (the repo holding the Containerfile) is set by install.sh
+# shellcheck source=/dev/null
+[ -f "$CONFIG" ] && . "$CONFIG"
+if [ ! -f "${FIREFOX_FREE_SRC:-}/Containerfile" ]; then
+    echo "firefox-free-update: no Containerfile in '${FIREFOX_FREE_SRC:-}', re-run install.sh" >&2
+    exit 1
+fi
+
+if [ "$1" = "--if-stale" ] && [ -f "$STAMP" ]; then
+    max_age=$(( ${2:-24} * 3600 ))
+    age=$(( $(date +%s) - $(stat -c %Y "$STAMP") ))
+    [ "$age" -lt "$max_age" ] && exit 0
+fi
+
+# Only one build at a time (timer and launcher may race)
+exec 9> "$STATE_DIR/lock"
+flock -n 9 || exit 0
+
+{
+    echo "=== $(date -Is) build start"
+    # REFRESH busts the build cache so the dnf upgrade layer always reruns
+    if podman build --pull=newer --build-arg REFRESH="$(date +%F)" \
+            -t firefox-free "$FIREFOX_FREE_SRC"; then
+        touch "$STAMP"
+        # Drop the untagged previous images (the running one is kept)
+        podman image prune -f
+        echo "=== $(date -Is) build ok"
+    else
+        echo "=== $(date -Is) build FAILED"
+        exit 1
+    fi
+} >> "$LOG" 2>&1

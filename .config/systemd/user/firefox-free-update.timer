@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily rebuild of the firefox-free container image
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+# Run at login if the machine was off at the scheduled time
+Persistent=true
+
+[Install]
+WantedBy=timers.target

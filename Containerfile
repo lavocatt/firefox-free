@@ -3,9 +3,13 @@ RUN dnf install -y firefox liberation-fonts alsa-lib pipewire-alsa pulseaudio-li
 # Proprietary-codec libavcodec (H.264, HEVC, AAC) from RPM Fusion. Fedora's
 # firefox ships without libavcodec, so MP4/H.264/AAC media fails to play.
 RUN dnf install -y \
-      https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-44.noarch.rpm \
+      https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
     && dnf install -y libavcodec-freeworld mesa-va-drivers-freeworld \
     && dnf clean all
+# firefox-free-update passes the date here so this layer is never served from
+# the build cache: every rebuild pulls the latest Firefox and security fixes.
+ARG REFRESH=0
+RUN echo "refresh: $REFRESH" && dnf upgrade -y --refresh && dnf clean all
 COPY firefox-free-prefs.js /usr/lib64/firefox/browser/defaults/preferences/
 # Firefox hands external schemes to GIO, which only forwards them to the host
 # portal when it believes it is sandboxed. Force it, or slack:// etc. are dropped.

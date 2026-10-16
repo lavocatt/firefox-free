@@ -1,0 +1,9 @@
+[Unit]
+Description=Rebuild the firefox-free container image
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/firefox-free-update --if-stale 20
+Nice=10
